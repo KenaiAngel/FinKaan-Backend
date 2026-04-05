@@ -6,12 +6,12 @@ conservando aquí solo el manejo HTTP (request/response, códigos de estado).
 """
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import jwt, JWTError
 from sqlalchemy.orm import Session
 
-from .. import models, schemas
+from .. import models, schemas, oauth
 from ..config import settings
 from ..database import get_db
 from ..redis_client import blacklist_token
@@ -47,3 +47,21 @@ def logout(
 
     blacklist_token(token, ttl)
     return {"message": "Sesión cerrada correctamente."}
+
+
+@router.get("/login/google")
+async def google_login(request: Request):
+    """Redirige al usuario a la página de Google"""
+    redirect_uri = request.url_for('auth_callback') 
+    return await oauth.google.authorize_redirect(request, str(redirect_uri))
+
+@router.get("/callback/google")
+async def auth_callback(request: Request, db: Session = Depends(get_db)):
+    """Recibe la respuesta de Google y procesa el login"""
+    token = await oauth.google.authorize_access_token(request)
+    user_info = token.get('userinfo')
+    
+    if not user_info:
+        raise HTTPException(status_code=400, detail="No se pudo obtener informacion de Google")
+
+    return auth_service.authenticate_or_register_social_user("google", user_info, db)

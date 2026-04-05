@@ -57,3 +57,50 @@ def authenticate_user(body: schemas.LoginRequest, db: Session) -> schemas.TokenR
         name=user.name,
         onboarding_done=user.onboarding_done,
     )
+
+def authenticate_or_register_social_user(
+    provider: str, 
+    user_info: dict, 
+    db: Session
+) -> schemas.TokenResponse:
+    # Extraer datos normalizados del proveedor
+    email = user_info.get("email").lower()
+    provider_user_id = user_info.get("sub")  # ID único del proveedor
+    name = user_info.get("name", email.split("@")[0])
+
+    social_acc = db.query(models.SocialProvider).filter(
+        models.SocialProvider.provider == provider,
+        models.SocialProvider.provider_user_id == provider_user_id
+    ).first()
+
+    if social_acc:
+        user = social_acc.user
+    else:
+        user = db.query(models.User).filter(models.User.email == email).first()
+
+        if not user:
+            user = models.User(
+                name=name,
+                email=email,
+                hashed_password=None, 
+                onboarding_done=False
+            )
+            db.add(user)
+            db.flush()
+            db.add(models.UserProgress(user_id=user.id))
+        
+        new_social = models.SocialProvider(
+            user_id=user.id,
+            provider=provider,
+            provider_user_id=provider_user_id,
+            raw_data=user_info
+        )
+        db.add(new_social)
+        db.commit()
+    
+    return schemas.TokenResponse(
+        access_token=create_access_token(user.id),
+        user_id=user.id,
+        name=user.name,
+        onboarding_done=user.onboarding_done,
+    )

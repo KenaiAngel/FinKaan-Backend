@@ -4,7 +4,7 @@ models.py — Modelos SQLAlchemy para FinKaan
 from datetime import datetime, timezone
 from sqlalchemy import (
     Boolean, DateTime, Integer, String, Text,
-    ForeignKey,
+    ForeignKey, JSON
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -23,7 +23,7 @@ class User(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     email: Mapped[str] = mapped_column(String(254), unique=True, nullable=False, index=True)
-    hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
+    hashed_password: Mapped[str] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now, onupdate=_now)
 
@@ -38,6 +38,25 @@ class User(Base):
     progress: Mapped["UserProgress"] = relationship(
         "UserProgress", back_populates="user", uselist=False, cascade="all, delete-orphan"
     )
+
+    # Relación con Provedores para Loging
+    social_providers: Mapped[list["SocialProvider"]] = relationship(
+        "SocialProvider", back_populates="user", cascade="all, delete-orphan")
+
+
+# ─── SocialProvider ─────────────────────────────────────────────────────────────
+
+class SocialProvider(Base):
+    __tablename__ = "social_providers"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    provider: Mapped[str] = mapped_column(String, nullable=False)
+    provider_user_id: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    raw_data: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+
+    user: Mapped["User"] = relationship("User", back_populates="social_providers")
 
 
 # ─── UserProgress ─────────────────────────────────────────────────────────────

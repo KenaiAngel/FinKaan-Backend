@@ -5,6 +5,8 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from packages.config import settings
+from starlette.middleware.sessions import SessionMiddleware
 
 from .database import engine, Base
 from .redis_client import ping as redis_ping
@@ -42,6 +44,11 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+)
+
+app.add_middleware(
+    SessionMiddleware, 
+    secret_key = settings.SECRET_KEY
 )
 
 # ─── Routers ──────────────────────────────────────────────────────────────────
