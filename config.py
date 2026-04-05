@@ -16,6 +16,9 @@ class Settings(BaseSettings):
 
     APP_ENV: str = "development"
 
+    GOOGLE_CLIENT_ID: str 
+    GOOGLE_CLIENT_SECRET: str 
+
     # IA — análisis conductual
     ANTHROPIC_API_KEY: str = ""
     GEMINI_API_KEY: str = ""
