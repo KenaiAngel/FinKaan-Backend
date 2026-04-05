@@ -5,9 +5,9 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from packages.config import settings
 from starlette.middleware.sessions import SessionMiddleware
 
+from .config import settings
 from .database import engine, Base
 from .redis_client import ping as redis_ping
 from .routers import auth, users, scenarios, analysis
