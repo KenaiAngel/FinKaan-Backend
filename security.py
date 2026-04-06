@@ -18,7 +18,7 @@ from .database import get_db
 from .redis_client import redis_client
 from . import models
 
-_pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+_pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 _bearer = HTTPBearer()
 
 CREDENTIALS_EXC = HTTPException(
