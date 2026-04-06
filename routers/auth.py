@@ -11,7 +11,8 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import jwt, JWTError
 from sqlalchemy.orm import Session
 
-from .. import models, schemas, oauth
+from .. import models, schemas
+from oauth import oauth
 from ..config import settings
 from ..database import get_db
 from ..redis_client import blacklist_token
